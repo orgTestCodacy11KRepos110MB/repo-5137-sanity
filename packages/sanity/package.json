@@ -55,7 +55,8 @@
       "import": "./lib/router.esm.js",
       "require": "./lib/router.js",
       "default": "./lib/router.esm.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "typesVersions": {
     "*": {

@@ -21,14 +21,17 @@ import {
   Stack,
   Text,
   Tooltip,
-  useRootTheme,
 } from '@sanity/ui'
-import React, {useMemo} from 'react'
+import React, {useCallback, useMemo} from 'react'
 import styled from 'styled-components'
 import {UserAvatar} from '../../../../components'
 import {getProviderTitle} from '../../../../store'
-import {StudioTheme} from '../../../../theme'
-import {useColorScheme} from '../../../colorScheme'
+import {type StudioThemeColorSchemeKey} from '../../../../theme'
+import {
+  useColorSchemeSetValue,
+  useColorSchemeValue,
+  _useColorSchemeInternalValue,
+} from '../../../colorScheme'
 import {useWorkspace} from '../../../workspace'
 import {LoginProviderLogo} from './LoginProviderLogo'
 
@@ -45,10 +48,58 @@ const AvatarBox = styled(Box)`
   min-height: ${({theme}) => theme.sanity.avatar.sizes[AVATAR_SIZE].size}px;
 `
 
+function AppearanceMenu({setScheme}: {setScheme: (nextScheme: StudioThemeColorSchemeKey) => void}) {
+  // Subscribe to just what we need, if the menu isn't shown then we're not subscribed to these contexts
+  const scheme = _useColorSchemeInternalValue()
+
+  const handleSystemScheme = useCallback(() => setScheme('system'), [setScheme])
+  const handleDarkScheme = useCallback(() => setScheme('dark'), [setScheme])
+  const handleLightScheme = useCallback(() => setScheme('light'), [setScheme])
+
+  return (
+    <>
+      <MenuDivider />
+
+      <Box padding={2}>
+        <Label size={1} muted>
+          Appearance
+        </Label>
+      </Box>
+
+      <MenuItem
+        aria-label="Use system appearance"
+        icon={DesktopIcon}
+        onClick={handleSystemScheme}
+        pressed={scheme === 'system'}
+        text="System"
+        iconRight={scheme === 'system' && <CheckmarkIcon />}
+      />
+
+      <MenuItem
+        aria-label="Use dark appearance"
+        icon={MoonIcon}
+        onClick={handleDarkScheme}
+        pressed={scheme === 'dark'}
+        iconRight={scheme === 'dark' && <CheckmarkIcon />}
+        text="Dark"
+      />
+
+      <MenuItem
+        aria-label="Use light appearance"
+        icon={SunIcon}
+        onClick={handleLightScheme}
+        pressed={scheme === 'light'}
+        iconRight={scheme === 'light' && <CheckmarkIcon />}
+        text="Light"
+      />
+    </>
+  )
+}
+
 export function UserMenu() {
   const {currentUser, projectId, auth} = useWorkspace()
-  const theme = useRootTheme().theme as StudioTheme
-  const {scheme, setScheme, clearStoredScheme, usingSystemScheme} = useColorScheme()
+  const scheme = useColorSchemeValue()
+  const setScheme = useColorSchemeSetValue()
 
   const providerTitle = getProviderTitle(currentUser?.provider)
 
@@ -114,44 +165,7 @@ export function UserMenu() {
             </Flex>
           </Card>
 
-          {!theme?.__legacy && (
-            <>
-              <MenuDivider />
-
-              <Box padding={2}>
-                <Label size={1} muted>
-                  Appearance
-                </Label>
-              </Box>
-
-              <MenuItem
-                aria-label="Use system appearance"
-                icon={DesktopIcon}
-                onClick={clearStoredScheme}
-                pressed={usingSystemScheme}
-                text="System"
-                iconRight={usingSystemScheme && <CheckmarkIcon />}
-              />
-
-              <MenuItem
-                aria-label="Use dark appearance"
-                icon={MoonIcon}
-                onClick={() => setScheme('dark')}
-                pressed={scheme === 'dark' && !usingSystemScheme}
-                iconRight={scheme === 'dark' && !usingSystemScheme && <CheckmarkIcon />}
-                text="Dark"
-              />
-
-              <MenuItem
-                aria-label="Use light appearance"
-                icon={SunIcon}
-                onClick={() => setScheme('light')}
-                pressed={scheme === 'light' && !usingSystemScheme}
-                iconRight={scheme === 'light' && !usingSystemScheme && <CheckmarkIcon />}
-                text="Light"
-              />
-            </>
-          )}
+          {setScheme && <AppearanceMenu setScheme={setScheme} />}
 
           <MenuDivider />
 

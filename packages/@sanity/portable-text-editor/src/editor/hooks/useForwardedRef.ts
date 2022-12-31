@@ -1,11 +1,10 @@
-import React, {useRef, useLayoutEffect, useEffect} from 'react'
+import React, {useRef, useEffect} from 'react'
 
-const useIsomorphicEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
-
+// @TODO use `import {useForwardedRef} from '@sanity/ui'`
 export function useForwardedRef<T>(ref: React.ForwardedRef<T>): React.MutableRefObject<T | null> {
   const innerRef = useRef<T | null>(null)
 
-  useIsomorphicEffect(() => {
+  useEffect(() => {
     if (!ref) return
 
     if (typeof ref === 'function') {
