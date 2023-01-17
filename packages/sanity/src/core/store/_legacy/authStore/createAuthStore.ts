@@ -1,4 +1,8 @@
-import createSanityClient, {ClientConfig as SanityClientConfig, SanityClient} from '@sanity/client'
+import {
+  createClient as createSanityClient,
+  ClientConfig as SanityClientConfig,
+  SanityClient,
+} from '@sanity/client'
 import {defer} from 'rxjs'
 import {map, shareReplay, startWith, switchMap} from 'rxjs/operators'
 import {memoize} from 'lodash'
@@ -245,7 +249,7 @@ export function _createAuthStore({
     })
 
     clearToken(projectId)
-    await requestClient.auth.logout()
+    await requestClient.request<void>({uri: '/auth/logout', method: 'POST'})
     broadcast(null)
   }
 

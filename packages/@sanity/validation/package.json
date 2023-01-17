@@ -60,11 +60,11 @@
     "rxjs": "^7.8.0"
   },
   "devDependencies": {
-    "@sanity/client": "^4.0.1",
+    "@sanity/client": "5.0.0-esm.16",
     "@sanity/schema": "3.2.5"
   },
   "peerDependencies": {
-    "@sanity/client": "^3.4.1 || ^4.0.0"
+    "@sanity/client": "^3.4.1 || ^4.0.0 || ^5.0.0"
   },
   "publishConfig": {
     "access": "public"
