@@ -100,7 +100,7 @@ export function getClientWrapper(
       )
     }
 
-    return createClient({
+    const client = createClient({
       ...apiConfig,
       apiVersion: '1',
       dataset: apiConfig.dataset || '~dummy-placeholder-dataset-',
@@ -109,5 +109,21 @@ export function getClientWrapper(
       requester,
       useCdn: false,
     })
+
+    // This is a hack to work around a case where the local studio is running on
+    // Sanity v2, but the CLI is v3. In this case, the created client is a more
+    // modern version which does not include the `getUrl` method. However, the
+    // method is required by `@sanity/export`. While v2 is still supported, we
+    // therefore keep this hack in place to avoid breaking changes, and will
+    // remove it once v2 is no longer supported. Note that we also patched the
+    // `@sanity/export` package to not require the `getUrl` method, but in the
+    // case where people do not upgrade their studios, this will still break.
+    ;(client as any).getUrl = (uri: string, useCdn?: boolean) => {
+      const config = client.config()
+      const base = useCdn ? config.cdnUrl : config.url
+      return `${base}/${uri.replace(/^\//, '')}`
+    }
+
+    return client
   }
 }
