@@ -93,6 +93,17 @@ export function PreviewItem<Item extends ObjectItem = ObjectItem>(props: Preview
     }
   })
 
+  useDidUpdate(open, (wasOpen) => {
+    // Why do we need a timeout here?
+    // The dialog always attempts to focus the last focused element when becoming the top layer.
+    // However, if an item has been added, we want to focus the preview card instead of the last focused element.
+    // Therefore, we use a timeout to make sure that this focus event happens in the next tick so that we focus
+    // the newly added item instead of the last focused element.
+    if (wasOpen) {
+      setTimeout(() => previewCardRef.current?.focus(), 0)
+    }
+  })
+
   const resolvingInitialValue = (value as any)._resolvingInitialValue
 
   const handleDuplicate = useCallback(() => {
