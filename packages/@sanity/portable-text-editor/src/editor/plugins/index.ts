@@ -68,13 +68,10 @@ export const withPlugins = <T extends Editor>(
     patchFunctions: operationToPatches,
     readOnly,
     schemaTypes,
-    slateEditor: e,
   })
   const withMaxBlocks = createWithMaxBlocks(maxBlocks || -1)
   const withPortableTextLists = createWithPortableTextLists(schemaTypes)
-  const [withUndoRedo, withUndoRedoCleanupFunction] = readOnly
-    ? []
-    : createWithUndoRedo({readOnly, patches$})
+  const withUndoRedo = createWithUndoRedo({readOnly, patches$})
   const withPortableTextMarkModel = createWithPortableTextMarkModel(schemaTypes)
   const withPortableTextBlockStyle = createWithPortableTextBlockStyle(schemaTypes, change$)
 

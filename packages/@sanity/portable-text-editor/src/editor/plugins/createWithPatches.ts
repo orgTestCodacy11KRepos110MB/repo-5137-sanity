@@ -76,7 +76,6 @@ export interface PatchFunctions {
 }
 
 interface Options {
-  slateEditor: PortableTextSlateEditor
   patchFunctions: PatchFunctions
   change$: Subject<EditorChange>
   schemaTypes: PortableTextMemberSchemaTypes
@@ -86,7 +85,6 @@ interface Options {
 }
 
 export function createWithPatches({
-  slateEditor,
   patchFunctions,
   change$,
   schemaTypes,
@@ -112,14 +110,14 @@ export function createWithPatches({
           const remotePatches = patches.filter((p) => p.origin !== 'local')
           if (remotePatches.length !== 0) {
             debug('Remote patches', patches)
-            Editor.withoutNormalizing(slateEditor, () => {
+            Editor.withoutNormalizing(editor, () => {
               remotePatches.forEach((patch) => {
                 debug(`Handling remote patch ${JSON.stringify(patch)}`)
-                withoutPatching(slateEditor, () => {
-                  withoutSaving(slateEditor, () => {
-                    withPreserveKeys(slateEditor, () => {
+                withoutPatching(editor, () => {
+                  withoutSaving(editor, () => {
+                    withPreserveKeys(editor, () => {
                       try {
-                        patchToOperations(slateEditor, patch, patches, snapshot)
+                        patchToOperations(editor, patch, patches, snapshot)
                       } catch (err) {
                         debug('Got error trying to create operations from patch')
                         console.error(err)

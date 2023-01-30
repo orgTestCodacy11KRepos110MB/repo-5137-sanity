@@ -33,17 +33,19 @@ export function useSyncValue(
         }
       }
 
+      // Don't sync the value if there are pending local changes.
+      // The value will be synced again after the local changes are submitted.
+      if (isPending.current && !readOnly) {
+        debug('Has local patches')
+        return
+      }
+
       if (previousValue.current === value) {
         debug('Value is the same object')
         return
       }
-      previousValue.current = value
 
-      // Don't sync the value if there are pending local changes.
-      // The value will be synced again after the local changes are submitted.
-      if (isPending.current && !readOnly) {
-        return
-      }
+      previousValue.current = value
 
       // If empty value, create a placeholder block
       if (!value || value.length === 0) {

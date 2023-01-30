@@ -8,9 +8,9 @@ import React, {
   useState,
 } from 'react'
 import {PortableTextBlock} from '@sanity/types'
-import {debounce} from 'lodash'
+import {debounce, throttle} from 'lodash'
 import {useSlate} from '@sanity/slate-react'
-import {EditorChange, EditorChanges, EditorSelection, PatchObservable} from '../../types/editor'
+import {EditorChange, EditorChanges, EditorSelection} from '../../types/editor'
 import {Patch} from '../../types/patch'
 import {FLUSH_PATCHES_DEBOUNCE_MS} from '../../constants'
 import {debugWithName} from '../../utils/debug'
@@ -30,15 +30,13 @@ export interface SynchronizerProps extends PropsWithChildren {
   isPending: React.MutableRefObject<boolean | null>
   keyGenerator: () => string
   onChange: (change: EditorChange) => void
-  patches$?: PatchObservable
   readOnly: boolean
   value: PortableTextBlock[] | undefined
 }
 
 export function Synchronizer(props: SynchronizerProps) {
-  const {change$, editor, isPending, onChange, keyGenerator, patches$, readOnly, value} = props
+  const {change$, editor, isPending, onChange, keyGenerator, readOnly, value} = props
   const [selection, setSelection] = useState<EditorSelection>(null)
-  const isControlledComponent = readOnly || !patches$
   const pendingPatches = useRef<Patch[]>([])
   const slateEditor = useSlate()
 
@@ -50,22 +48,10 @@ export function Synchronizer(props: SynchronizerProps) {
     slateEditor,
   })
 
-  // On mount
-  useEffect(() => {
-    // Sync initial value from props
-    debug('Syncing value from props initially')
-    change$.next({type: 'value', value})
-    // Unmount
-    return () => {
-      onFlushPendingPatches()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // No deps, only initially
-
   useEffect(() => {
     debug('Value from props changed, syncing new value')
     change$.next({type: 'value', value})
-  }, [change$, isPending, isControlledComponent, syncValue, value])
+  }, [change$, value])
 
   const onFlushPendingPatches = useCallback(() => {
     debug('Flushing pending patches')
@@ -78,17 +64,24 @@ export function Synchronizer(props: SynchronizerProps) {
       )
       isPending.current = false
     }
-  }, [onChange, isPending])
+  }, [isPending, onChange])
 
   // Debounced version of flush pending patches
   const onFlushPendingPatchesDebounced = useMemo(
     () =>
-      debounce(onFlushPendingPatches, FLUSH_PATCHES_DEBOUNCE_MS, {
+      throttle(onFlushPendingPatches, FLUSH_PATCHES_DEBOUNCE_MS, {
         leading: false,
         trailing: true,
       }),
     [onFlushPendingPatches]
   )
+
+  // Flush pending patches on unmount
+  useEffect(() => {
+    return () => {
+      onFlushPendingPatches()
+    }
+  }, [onFlushPendingPatches])
 
   // Subscribe to, and handle changes from the editor
   useEffect(() => {

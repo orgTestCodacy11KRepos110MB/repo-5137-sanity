@@ -97,7 +97,6 @@ export class PortableTextEditor extends React.Component<
   public change$: EditorChanges = new Subject()
   public schemaTypes: PortableTextMemberSchemaTypes
 
-  private bufferedPatches$?: PatchObservable
   private editable?: EditableAPI
   private isPending: React.MutableRefObject<boolean | null>
 
@@ -146,7 +145,7 @@ export class PortableTextEditor extends React.Component<
   render() {
     const {onChange, value, children, patches$, incomingPatches$} = this.props
     const {change$, isPending} = this
-    const _patches$ = incomingPatches$ || patches$
+    const _patches$ = incomingPatches$ || patches$ // Backward compatibility
 
     const maxBlocks =
       typeof this.props.maxBlocks === 'undefined'
@@ -171,7 +170,6 @@ export class PortableTextEditor extends React.Component<
             isPending={isPending}
             keyGenerator={keyGenerator}
             onChange={onChange}
-            patches$={_patches$}
             readOnly={readOnly}
             value={value}
           >
