@@ -13,13 +13,22 @@ interface ImageActionsMenuProps {
   children: ReactNode
   onEdit: MouseEventHandler<HTMLButtonElement>
   setHotspotButtonElement: (element: HTMLButtonElement | null) => void
+  setMenuButtonElement: (element: HTMLButtonElement | null) => void
   showEdit: boolean
   isMenuOpen: boolean
   onMenuOpen: (flag: boolean) => void
 }
 
 export function ImageActionsMenu(props: ImageActionsMenuProps) {
-  const {onEdit, children, showEdit, setHotspotButtonElement, onMenuOpen, isMenuOpen} = props
+  const {
+    onEdit,
+    children,
+    showEdit,
+    setHotspotButtonElement,
+    setMenuButtonElement,
+    onMenuOpen,
+    isMenuOpen,
+  } = props
 
   const [menuElement, setMenuElement] = useState<HTMLDivElement | null>(null)
   const [buttonElement, setButtonElement] = useState<HTMLButtonElement | null>(null)
@@ -29,7 +38,7 @@ export function ImageActionsMenu(props: ImageActionsMenuProps) {
   useGlobalKeyDown(
     useCallback(
       (event) => {
-        if (isMenuOpen && (event.key === 'Escape' || event.key === 'Tab')) {
+        if (isMenuOpen && event.key === 'Escape') {
           onMenuOpen(false)
           buttonElement?.focus()
         }
@@ -50,6 +59,17 @@ export function ImageActionsMenu(props: ImageActionsMenuProps) {
       [buttonElement, onMenuOpen]
     ),
     [menuElement]
+  )
+
+  const setOptionsButtonRef = useCallback(
+    (el: HTMLButtonElement | null) => {
+      // Pass the button element to the parent component so that it can focus it when e.g. closing dialogs
+      setMenuButtonElement(el)
+
+      // Set focus back on the button when closing the menu
+      setButtonElement(el)
+    },
+    [setMenuButtonElement]
   )
 
   return (
@@ -82,7 +102,7 @@ export function ImageActionsMenu(props: ImageActionsMenuProps) {
           icon={EllipsisVerticalIcon}
           mode="ghost"
           onClick={handleClick}
-          ref={setButtonElement}
+          ref={setOptionsButtonRef}
         />
       </Popover>
     </MenuActionsWrapper>
