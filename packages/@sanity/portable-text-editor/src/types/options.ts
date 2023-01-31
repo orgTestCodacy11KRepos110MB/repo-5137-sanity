@@ -2,6 +2,7 @@ import {PortableTextEditor} from '../editor/PortableTextEditor'
 import {PatchObservable} from './editor'
 
 export type createEditorOptions = {
+  isPending: React.MutableRefObject<boolean | null>
   keyGenerator: () => string
   patches$?: PatchObservable
   portableTextEditor: PortableTextEditor

@@ -4,7 +4,7 @@ import {createContext, useContext} from 'react'
 export const defaultKeyGenerator = (): string => randomKey(12)
 
 /**
- * A React context for sharing the editor's readOnly status.
+ * A React context for sharing the editor's keyGenerator.
  */
 
 export const PortableTextEditorKeyGeneratorContext =

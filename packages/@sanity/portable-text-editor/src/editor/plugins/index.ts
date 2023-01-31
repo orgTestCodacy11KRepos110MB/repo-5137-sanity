@@ -43,7 +43,7 @@ export const withPlugins = <T extends Editor>(
   options: createEditorOptions
 ): {editor: PortableTextSlateEditor; subscribe: () => () => void} => {
   const e = editor as T & PortableTextSlateEditor
-  const {keyGenerator, portableTextEditor, patches$, readOnly, maxBlocks} = options
+  const {keyGenerator, portableTextEditor, patches$, readOnly, maxBlocks, isPending} = options
   const {schemaTypes, change$} = portableTextEditor
   e.subscriptions = []
   if (e.destroy) {
@@ -63,6 +63,7 @@ export const withPlugins = <T extends Editor>(
   const withEditableAPI = createWithEditableAPI(portableTextEditor, schemaTypes, keyGenerator)
   const withPatches = createWithPatches({
     change$,
+    isPending,
     keyGenerator,
     patches$,
     patchFunctions: operationToPatches,

@@ -12,21 +12,23 @@ import {withPlugins} from '../plugins'
 const debug = debugWithName('component:PortableTextEditor:SlateContainer')
 
 export interface SlateContainerProps extends PropsWithChildren {
+  isPending: React.MutableRefObject<boolean | null>
   keyGenerator: () => string
+  maxBlocks: number | undefined
   patches$?: PatchObservable
   portableTextEditor: PortableTextEditor
   readOnly: boolean
-  maxBlocks: number | undefined
   value: PortableTextBlock[] | undefined
 }
 
 export function SlateContainer(props: SlateContainerProps) {
-  const {patches$, portableTextEditor, readOnly, maxBlocks, keyGenerator, value} = props
+  const {patches$, portableTextEditor, readOnly, maxBlocks, keyGenerator, value, isPending} = props
 
   // Create the slate instance
   const [slateEditor, subscribe] = useMemo(() => {
     debug('Creating new Slate editor instance')
     const {editor, subscribe: _sub} = withPlugins(withReact(createEditor()), {
+      isPending,
       keyGenerator,
       maxBlocks,
       patches$,
@@ -50,13 +52,14 @@ export function SlateContainer(props: SlateContainerProps) {
   useEffect(() => {
     debug('Re-initializing plugin chain')
     withPlugins(slateEditor, {
+      isPending,
       keyGenerator,
+      maxBlocks,
       patches$,
       portableTextEditor,
       readOnly,
-      maxBlocks,
     })
-  }, [keyGenerator, portableTextEditor, maxBlocks, readOnly, patches$, slateEditor])
+  }, [keyGenerator, portableTextEditor, maxBlocks, readOnly, patches$, slateEditor, isPending])
 
   const initialValue = useMemo(
     () =>

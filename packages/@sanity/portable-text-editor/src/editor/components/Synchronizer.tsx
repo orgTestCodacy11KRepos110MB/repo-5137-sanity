@@ -8,7 +8,7 @@ import React, {
   useState,
 } from 'react'
 import {PortableTextBlock} from '@sanity/types'
-import {debounce, throttle} from 'lodash'
+import {debounce} from 'lodash'
 import {useSlate} from '@sanity/slate-react'
 import {EditorChange, EditorChanges, EditorSelection} from '../../types/editor'
 import {Patch} from '../../types/patch'
@@ -50,26 +50,26 @@ export function Synchronizer(props: SynchronizerProps) {
 
   useEffect(() => {
     debug('Value from props changed, syncing new value')
+    syncValue(value)
     change$.next({type: 'value', value})
-  }, [change$, value])
+  }, [syncValue, change$, value])
 
   const onFlushPendingPatches = useCallback(() => {
     debug('Flushing pending patches')
     const finalPatches = [...pendingPatches.current]
     if (finalPatches.length > 0) {
-      onChange({type: 'mutation', patches: pendingPatches.current})
+      onChange({type: 'mutation', patches: finalPatches})
       pendingPatches.current = pendingPatches.current.splice(
         finalPatches.length,
         pendingPatches.current.length
       )
-      isPending.current = false
     }
-  }, [isPending, onChange])
+  }, [onChange])
 
   // Debounced version of flush pending patches
   const onFlushPendingPatchesDebounced = useMemo(
     () =>
-      throttle(onFlushPendingPatches, FLUSH_PATCHES_DEBOUNCE_MS, {
+      debounce(onFlushPendingPatches, FLUSH_PATCHES_DEBOUNCE_MS, {
         leading: false,
         trailing: true,
       }),
@@ -101,11 +101,6 @@ export function Synchronizer(props: SynchronizerProps) {
             setSelection(next.selection)
           })
           onChange(next) // Keep this out of the startTransition!
-          break
-        case 'value':
-          debug('Syncing value')
-          syncValue(next.value)
-          onChange(next)
           break
         default:
           onChange(next)

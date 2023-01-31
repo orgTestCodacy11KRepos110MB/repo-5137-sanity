@@ -1,5 +1,5 @@
 /* eslint-disable max-nested-callbacks */
-import {Subject} from 'rxjs'
+import {Subject, concatMap, share, tap} from 'rxjs'
 import {
   Descendant,
   Editor,
@@ -28,6 +28,7 @@ import {PATCHING, isPatching, withoutPatching} from '../../utils/withoutPatching
 import {KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
 import {createPatchToOperations} from '../../utils/patchToOperations'
 import {withPreserveKeys} from '../../utils/withPreserveKeys'
+import {bufferUntil} from '../../utils/bufferUntil'
 import {withoutSaving} from './createWithUndoRedo'
 
 const debug = debugWithName('plugin:withPatches')
@@ -76,21 +77,23 @@ export interface PatchFunctions {
 }
 
 interface Options {
-  patchFunctions: PatchFunctions
   change$: Subject<EditorChange>
-  schemaTypes: PortableTextMemberSchemaTypes
-  patches$?: PatchObservable
+  isPending: React.MutableRefObject<boolean | null>
   keyGenerator: () => string
+  patches$?: PatchObservable
+  patchFunctions: PatchFunctions
   readOnly: boolean
+  schemaTypes: PortableTextMemberSchemaTypes
 }
 
 export function createWithPatches({
-  patchFunctions,
   change$,
-  schemaTypes,
+  isPending,
   keyGenerator,
   patches$,
+  patchFunctions,
   readOnly,
+  schemaTypes,
 }: Options): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   // The previous editor children are needed to figure out the _key of deleted nodes
   // The editor.children would no longer contain that information if the node is already deleted.
@@ -106,33 +109,45 @@ export function createWithPatches({
     if (patches$) {
       editor.subscriptions.push(() => {
         debug('Subscribing to patches$')
-        const sub = patches$.subscribe(({patches, snapshot}) => {
-          const remotePatches = patches.filter((p) => p.origin !== 'local')
-          if (remotePatches.length !== 0) {
-            debug('Remote patches', patches)
-            Editor.withoutNormalizing(editor, () => {
-              remotePatches.forEach((patch) => {
-                debug(`Handling remote patch ${JSON.stringify(patch)}`)
-                withoutPatching(editor, () => {
-                  withoutSaving(editor, () => {
-                    withPreserveKeys(editor, () => {
-                      try {
-                        patchToOperations(editor, patch, patches, snapshot)
-                      } catch (err) {
-                        debug('Got error trying to create operations from patch')
-                        console.error(err)
-                      }
+        const sub = patches$
+          .pipe(
+            tap(({patches}) => {
+              if (patches.every((p) => p.origin === 'local')) {
+                isPending.current = false
+              }
+            }),
+            bufferUntil(() => !isPending.current),
+            concatMap((incoming) => {
+              return incoming
+            })
+          )
+          .subscribe(({patches, snapshot}) => {
+            const remotePatches = patches.filter((p) => p.origin !== 'local')
+            if (remotePatches.length !== 0) {
+              debug('Remote patches', patches)
+              Editor.withoutNormalizing(editor, () => {
+                remotePatches.forEach((patch) => {
+                  debug(`Handling remote patch ${JSON.stringify(patch)}`)
+                  withoutPatching(editor, () => {
+                    withoutSaving(editor, () => {
+                      withPreserveKeys(editor, () => {
+                        try {
+                          patchToOperations(editor, patch, patches, snapshot)
+                        } catch (err) {
+                          debug('Got error trying to create operations from patch')
+                          console.error(err)
+                        }
+                      })
                     })
                   })
                 })
               })
-            })
-          }
-          if (patches.length > 0) {
-            debug('Emitting new value from snapshot')
-            change$.next({type: 'value', value: snapshot})
-          }
-        })
+            }
+            // if (patches.length > 0) {
+            //   debug('Emitting new value from snapshot')
+            //   change$.next({type: 'value', value: snapshot})
+            // }
+          })
         return () => {
           debug('Unsubscribing to patches$')
           sub.unsubscribe()

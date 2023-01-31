@@ -117,7 +117,34 @@ describe('collaborate editing', () => {
       ]
     `)
     const selA = await editorA.getSelection()
-    expect(selA).toMatchInlineSnapshot(`null`)
+    expect(selA).toMatchInlineSnapshot(`
+      Object {
+        "anchor": Object {
+          "offset": 1,
+          "path": Array [
+            Object {
+              "_key": "B-2",
+            },
+            "children",
+            Object {
+              "_key": "B-3",
+            },
+          ],
+        },
+        "focus": Object {
+          "offset": 1,
+          "path": Array [
+            Object {
+              "_key": "B-2",
+            },
+            "children",
+            Object {
+              "_key": "B-3",
+            },
+          ],
+        },
+      }
+    `)
     await editorA.pressKey('2')
     valA = await editorA.getValue()
     valB = await editorB.getValue()
@@ -132,7 +159,7 @@ describe('collaborate editing', () => {
               "_key": "B-3",
               "_type": "span",
               "marks": Array [],
-              "text": "21",
+              "text": "12",
             },
           ],
           "markDefs": Array [],

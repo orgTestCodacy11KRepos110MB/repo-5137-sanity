@@ -163,6 +163,7 @@ export class PortableTextEditor extends React.Component<
           portableTextEditor={this}
           readOnly={readOnly}
           value={value}
+          isPending={isPending}
         >
           <Synchronizer
             change$={change$}
